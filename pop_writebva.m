@@ -130,6 +130,7 @@ if ~isempty(EEG.event)
     for index = 1:length(EEG.event)
         EEG.event(index).comment = EEG.event(index).type;
         EEG.event(index).type    = 'Stimulus';
+
     end;
     
     % make event cell array
@@ -137,11 +138,13 @@ if ~isempty(EEG.event)
     for index = 1:EEG.trials
         EEG.event(end+1).type    = 'New Segment';
         EEG.event(end  ).latency = (index-1)*EEG.pnts+1;
+        Date=EEG.event(index).bvtime;
+        EEG.event(index).bvtime  = Date;       
     end;
-    tmpevent = EEG.event;
+    
+    tmpevent = EEG.event; 
     [tmp latorder ] = sort( [ tmpevent.latency ] );
     EEG.event = EEG.event(latorder);
-    tmpevent = tmpevent( latorder );
 
     % Recode boundary events
     % ----------------------
@@ -152,6 +155,7 @@ if ~isempty(EEG.event)
     for index = 1:length(notduplist)
         EEG.event(notduplist(index)).type    = 'New Segment'; % Recode boundary event type
         EEG.event(notduplist(index)).comment = '';            % Recode boundary event comment
+        
     end;
     EEG.event(duplist) = []; % Remove duplicate New Segment events 
 
@@ -193,8 +197,15 @@ if ~isempty(EEG.event)
             end;
         else tmpcom = num2str(e(index).type);
         end;
-
-        fprintf(fid2, 'Mk%d=%s,%s,%d,%d,0,0\n', index, num2str(e(index).type), num2str(tmpcom), round(e(index).latency), tmpdur);
+        
+        % Date field
+        % ----------
+        Date = EEG.event(index).bvtime;
+        if(isempty(Date))   Date='';
+        else                Date=Date{1};end
+        
+        fprintf(fid2, 'Mk%d=%s,%s,%d,%d,0,%s\n', index, num2str(e(index).type), ...
+            num2str(tmpcom), round(e(index).latency), tmpdur, Date);
     end;
 end
 fclose(fid1);
